@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import Logo from './Logo';
+
+// Use the deployed app URL so email confirmation doesn't redirect to localhost
+const APP_URL = 'https://glitch8x.github.io/signal-pluse';
 
 const Signup = () => {
     const navigate = useNavigate();
@@ -10,6 +13,7 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [confirmed, setConfirmed] = useState(false);
 
     const handleSignUp = async (e) => {
         e.preventDefault();
@@ -18,16 +22,52 @@ const Signup = () => {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+                emailRedirectTo: `${APP_URL}/login`,
+            },
         });
 
         if (error) {
             alert(error.message);
             setLoading(false);
         } else {
-            alert('Account created! Please check your email for verification.');
-            navigate('/login');
+            setConfirmed(true);
+            setLoading(false);
         }
     };
+
+    // Show branded confirmation screen after signup
+    if (confirmed) {
+        return (
+            <div className="flex bg-[#ccfbf1] min-h-screen items-center justify-center p-4">
+                <div className="flex flex-col items-center text-center bg-white rounded-[40px] shadow-2xl p-12 max-w-md w-full border border-white/20 gap-6">
+                    <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center">
+                        <CheckCircle className="w-12 h-12 text-emerald-500" />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black text-gray-800 tracking-tighter mb-2">Check your inbox!</h2>
+                        <p className="text-gray-500 text-base leading-relaxed">
+                            We sent a confirmation link to{' '}
+                            <span className="font-bold text-emerald-600">{email}</span>.
+                        </p>
+                        <p className="text-gray-500 text-base mt-2">
+                            Click it to activate your{' '}
+                            <span className="font-black text-gray-800">Signal Pulse</span> account.
+                        </p>
+                    </div>
+                    <div className="px-6 py-3 bg-emerald-50 rounded-2xl border border-emerald-100 text-emerald-700 text-sm font-semibold">
+                        📡 Signal Pulse — Confirm Your Signup
+                    </div>
+                    <button
+                        onClick={() => navigate('/login')}
+                        className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl text-lg font-black tracking-tight transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
+                    >
+                        Go to Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex bg-[#ccfbf1] min-h-screen items-center justify-center p-4">
